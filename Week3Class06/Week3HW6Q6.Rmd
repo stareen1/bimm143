@@ -2,7 +2,7 @@
 title: "Week3HW6Question6"
 author: "Sarah Tareen"
 date: "2023-04-25"
-output:
+output: 
   pdf_document: default
   html_document: default
 ---

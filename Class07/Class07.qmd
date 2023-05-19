@@ -1,7 +1,7 @@
 ---
 title: "Class 7: Machine Learning"
 author: "Sarah Tareen"
-format: pdf
+format: gfm
 editor: visual
 ---
 
@@ -127,14 +127,13 @@ dim(x)
 
 There are 17 rows and 4 columns.
 
-\>Q2. Which approach to solving the \'row-names problem\' mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
+\>Q2. Which approach to solving the 'row-names problem' mentioned above do you prefer and why? Is one approach more robust than another under certain circumstances?
 
 I used the approach that set `rownames=1` because it was more simple and easier to understand. One might be more robust since if you run `x <- x[,-1]` multiple times you can remove more columns if desired but its also easier to choose one of the columns to set `rownames` to which deletes that column as well.
 
 Now we can generate some basic visualizations.
 
-\>Q3. Changing what optional argument in the above **`barplot()`** function results in the following plot?
-Changing the argument `col` resulted in this colorful plot based on the food categories of the rows.
+\>Q3. Changing what optional argument in the above **`barplot()`** function results in the following plot? Changing the argument `col` resulted in this colorful plot based on the food categories of the rows.
 
 ```{r}
 barplot(as.matrix(x), col = rainbow( nrow(x) ))
@@ -218,7 +217,7 @@ par(mar=c(10, 3, 0.35, 0))
 barplot( pca$rotation[,1], las=2 )
 ```
 
-\>Q9. Generate a similar \'loadings plot\' for PC2. What two food groups feature prominantely and what does PC2 mainly tell us about?
+\>Q9. Generate a similar 'loadings plot' for PC2. What two food groups feature prominantely and what does PC2 mainly tell us about?
 
 ```{r}
 par(mar=c(10, 3, 0.35, 0))
