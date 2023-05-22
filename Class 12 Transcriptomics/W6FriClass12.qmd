@@ -1,0 +1,266 @@
+---
+title: "Class12"
+author: Sarah Tareen
+format: gfm
+editor: visual
+---
+
+# 1. Bioconductor and DESeq2 setup
+
+We used commands to install Bioconductor and the DESeq2 package in our Rconsole so we can download them properly and answer no to any questions about updates.
+
+# 2. Import countData and colData
+
+Lets download the csv files.
+
+```{r}
+counts <- read.csv("airway_scaledcounts.csv", row.names=1)
+#The ID column names of counts will be the rows of metadata
+metadata <-  read.csv("airway_metadata.csv")
+
+head(counts)
+head(metadata)
+```
+
+> **Q1.** How many genes are in this dataset?
+>
+> In this dataset there are `r nrow(counts)` genes.
+
+```{r}
+nrow(counts)
+```
+
+There are 38,694 genes in the counts dataset.
+
+> **Q2.** How many 'control' cell lines do we have?
+
+```{r, include=FALSE}
+#include argument can be used to hide code in the pdf but still show the results.
+control_cell_lines <- table(metadata$dex)['control']
+```
+
+There are `r control_cell_lines` control cell lines.
+
+# 3. Toy differential gene expression
+
+Let's start with exploratory analysis.
+
+```{r}
+#We want to create a subset from the dex column of just the control rows.
+# metadata[,"dex"]=="control" is a vector of TRUE and FALSE
+control <- metadata[metadata[,"dex"]=="control",]
+
+# we want to know the IDs of the control patients using control$id to select the columns of the counts dataset
+control.counts <- counts[ ,control$id]
+head(control.counts)
+
+
+#control.mean <- rowSums( control.counts )/4
+control.mean <- rowMeans(control.counts)
+head(control.mean)
+```
+
+> -   **Q3.** How would you make the above code in either approach more robust?
+
+You can make the lab code (shown in the comment) more robust as shown with the line of code that uses the `rowMeans` function so that this line of code can be used for a data frame with any number of columns of controls IDs.
+
+> -   **Q4.** Follow the same procedure for the `treated` samples (i.e. calculate the mean per gene across drug treated samples and assign to a labeled vector called `treated.mean`)
+
+```{r}
+treated <- metadata[metadata[,"dex"]== 'treated',]
+
+treated.counts <- counts[, treated$id]
+head(treated.counts)
+
+treated.mean <- rowMeans(treated.counts)
+head(treated.mean)
+```
+
+We can combine the mean counts.
+
+```{r}
+meancounts <- data.frame(control.mean, treated.mean)
+colSums(meancounts)
+```
+
+> **Q5 (a).** Create a scatter plot showing the mean of the treated samples against the mean of the control samples. Your plot should look something like the following.
+
+```{r}
+plot(meancounts$control.mean, meancounts$treated.mean, xlab = "control.mean", ylab = "treated.mean")
+```
+
+> **Q5 (b).**You could also use the **ggplot2** package to make this figure producing the plot below. What **geom\_?()** function would you use for this plot?
+>
+> geom_point
+
+```{r}
+library(ggplot2)
+ggplot(meancounts, aes(x=meancounts$control.mean, 
+                       y=meancounts$treated.mean)) + 
+                   geom_point(shape = 21) 
+```
+
+There are supposed to be many more data points but they are all clustered together so we need to change the scale.
+
+> **Q6.** Try plotting both axes on a log scale. What is the argument to **plot()** that allows you to do this?
+>
+> log
+
+```{r}
+plot(meancounts, log="xy")
+# points that are off from the line can mean that the gene is expressed differently when treated with the drug
+```
+
+However, we get a warning because we cannot do logarithm of 0.
+
+We can see the fold change increase in expression in genes when treated with drug vs control.
+
+-   20/20 = 1 same expression log2(1) = 0 so there are no differences in expression you get a 0
+
+-   40/20 = 2 log2(2) = 1 double expression
+
+-   10/20 = 1/2 log2(1/2) = -1 half the expression
+
+To calculate the log2() of the fold change between treated and control...
+
+```{r}
+#you can add a column to the dataframe without creating a new one
+meancounts$log2fc <- log2(meancounts$treated.mean/
+                            meancounts$control.mean)
+head(meancounts)
+#the first row has less expression after treating it so we get a negative logarithm fold change
+#NaN not a number because division by 0 does not exist, gene not expressed 
+#-Inf -infinity because we cannot do log(0)
+```
+
+To get rid of the weird values we can remove zero values.
+
+> -   **Q7.** What is the purpose of the `arr.ind` argument in the **which()** function call above? Why would we then take the first column of the output and need to call the **unique()** function?
+>
+> The `arr.ind` argument gives the row and column of each zero value. We only take the first column of the output because it contains all the row numbers for each zero value, and if there is a zero in any row, we cannot take the log fold change number of it. Finally we call the `unique()` function to remove any repeat rows.
+
+```{r}
+# we want to remove zeroes from the first two columns
+#meancounts[,1:2] == 0
+
+#arr.ind gives the row and column of the zero value
+#which(meancounts[,1:2]==0, arr.ind=TRUE)
+
+zero.vals <- which(meancounts[,1:2]==0, arr.ind=TRUE)
+head(zero.vals)
+
+#We can get rid of the repeats of removing the values from the same rows.
+to.rm <- unique(zero.vals[,1])
+mycounts <- meancounts[-to.rm,]
+head(mycounts)
+```
+
+## Overexpressed and underexpressed genes
+
+> **Q8.** Using the `up.ind` vector above can you determine how many up regulated genes we have at the greater than 2 fc level?
+>
+> There are 250 up regulated genes.
+
+```{r}
+up.ind <- mycounts$log2fc > 2
+table(up.ind)["TRUE"]
+```
+
+> **Q9.** Using the `down.ind` vector above can you determine how many down regulated genes we have at the greater than 2 fc level?
+>
+> There are 367 down regulated genes.
+
+```{r}
+down.ind <- mycounts$log2fc < (-2)
+table(down.ind)['TRUE']
+```
+
+> -   **Q10.** Do you trust these results? Why or why not?
+>
+> We cannot say yes with certainty until we see some statistical analysis so we can tell if the differences in expression is significant using a value like p-values.
+
+# 4. DESeq2 analysis
+
+Let's load the library.
+
+```{r}
+library(DESeq2)
+```
+
+```{r}
+# For citing the package you use.
+citation("DESeq2")
+```
+
+Let's generate the specific object that `DESeq2` needs:
+
+```{r}
+dds <- DESeqDataSetFromMatrix(countData = counts, 
+                              colData = metadata,
+                              design = ~dex)
+#warning just tells us it converted the "control" and "treated" to factors
+dds
+```
+
+Now let's run the analysis, which is doing all the math we did before with the logarithms.
+
+```{r}
+#We need to store the analysis in the same object.
+dds <- DESeq(dds)
+```
+
+Now let's check the results.
+
+```{r}
+# Now we have p-values and adjusted p-values. We need the adjusted ones because we are comparing multiple values and the p-values can be misleading.
+#Always use p adjusted!
+res <- results(dds)
+```
+
+```{r}
+#This tells us the up and downregulated genes
+# We can adjust the adjusted p-value using alpha
+# We need to change the threshold for the log fold change because 
+# by default its showing all significant changes
+
+summary(res, alpha = 0.05)
+```
+
+# 6. Data Visualization
+
+```{r}
+#to make the more significant values appear on top use -log10 with base 10 so we can easily evaluate that 10 is p-value of 10^-10
+plot(res$log2FoldChange, -log10(res$padj))
+```
+
+Let's improve the plot.
+
+```{r}
+plot( res$log2FoldChange,  -log(res$padj), 
+ ylab="-Log(P-value)", xlab="Log2(FoldChange)")
+
+# Add some cut-off lines
+abline(v=c(-2,2), col="darkgray", lty=2)
+abline(h=-log(0.05), col="darkgray", lty=2)
+```
+
+Let's add color:)
+
+```{r}
+# Setup our custom point color vector 
+mycols <- rep("gray", nrow(res))
+mycols[ abs(res$log2FoldChange) > 2 ]  <- "red" 
+
+inds <- (res$padj < 0.01) & (abs(res$log2FoldChange) > 2 )
+mycols[ inds ] <- "blue"
+
+# Volcano plot with custom colors 
+plot( res$log2FoldChange,  -log(res$padj), 
+ col=mycols, ylab="-Log(P-value)", xlab="Log2(FoldChange)" )
+
+# Cut-off lines
+abline(v=c(-2,2), col="gray", lty=2)
+abline(h=-log(0.1), col="gray", lty=2)
+
+#red means that the fold change is high enough but not significant so focus on the blue
+```

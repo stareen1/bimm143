@@ -1,0 +1,19 @@
+---
+title: "Class11 : Genomics"
+format: gfm
+editor: visual
+---
+
+# Question 5 Proportion of MXL with G\|G Genotype
+
+```{r}
+mxl <- read.csv("373531-SampleGenotypes-Homo_sapiens_Variation_Sample_rs8067378.csv")
+head(mxl)
+
+```
+
+How many G\|G phenotypes are there?
+
+```{r}
+table(mxl[,2]) / nrow(mxl)
+```
