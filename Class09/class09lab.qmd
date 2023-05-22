@@ -1,7 +1,7 @@
 ---
 title: "Class09_lab"
 author: Sarah Tareen
-format: pdf
+format: gfm
 editor: visual
 ---
 
