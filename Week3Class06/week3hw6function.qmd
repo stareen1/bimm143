@@ -2,7 +2,7 @@
 title: "Week3 HW6"
 author: "Sarah Tareen"
 date: "2023-04-25"
-output: html_document
+format: gfm
 ---
 
 ## Section 1: Improving analysis code by writing functions
@@ -105,6 +105,19 @@ resulting dendrogram plot. Look up the documentation to see what each of these f
  - hclust() makes a dendrogram plot of the dissimilarities 
  
 ```{r}
+## We can use these PDB files for the proteins 
+library(bio3d)
+s1 <- read.pdb("4AKE") # kinase with drug
+s2 <- read.pdb("1AKE") # kinase no drug
+s3 <- read.pdb("1E4Y") # kinase with drug
+s1.chainA <- trim.pdb(s1, chain="A", elety="CA")
+s2.chainA <- trim.pdb(s2, chain="A", elety="CA")
+## changed the s1 to s3
+s3.chainA <- trim.pdb(s3, chain="A", elety="CA")
+s1.b <- s1.chainA$atom$b
+s2.b <- s2.chainA$atom$b
+s3.b <- s3.chainA$atom$b
+
 hc <- hclust( dist( rbind(s1.b, s2.b, s3.b) ) )
 plot(hc)
 ```

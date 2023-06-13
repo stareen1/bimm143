@@ -2,9 +2,8 @@
 title: "Week3HW6Question6"
 author: "Sarah Tareen"
 date: "2023-04-25"
-output: 
-  pdf_document: default
-  html_document: default
+format: gfm
+ 
 ---
 > Q1 What type of object is returned from the read.pdb() function? 
  The type of object returned is a pdb object.

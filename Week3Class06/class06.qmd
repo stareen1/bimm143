@@ -2,7 +2,7 @@
 title: 'Week 3: R Functions'
 author: "Sarah Tareen"
 date: "2023-04-21"
-output: pdf_document
+format: gfm
 ---
 
 This week we are introducing **R functions** and how to write our own functions. 
