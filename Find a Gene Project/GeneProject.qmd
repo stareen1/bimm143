@@ -1,0 +1,51 @@
+---
+title: "Find a Gene Project Part 2"
+author: "Sarah Tareen"
+format: pdf
+editor: visual
+---
+
+## 7. Heat Maps
+
+```{r}
+library("bio3d")
+alignment <- read.fasta("muscle-I20230605-205038-0543-84824897-p1m")
+```
+
+```{r}
+iden_matrix <- seqidentity(alignment)
+```
+
+```{r}
+heatmap(iden_matrix)
+```
+
+```{r}
+library(ComplexHeatmap)
+Heatmap(iden_matrix, row_names_gp = gpar(fontsize = 7))
+```
+
+```{r}
+seq <- read.fasta("seqdump")
+blast <- blast.pdb(seq, database = "pdb")
+```
+
+```{r}
+blast
+```
+
+```{r}
+plot.blast(blast)
+```
+
+```{r}
+annotations <- pdb.annotate(c("1HBQ_A","1ERB_A","1RLB_E"))
+```
+
+```{r}
+join <- consensus(alignment)
+```
+
+```{r}
+
+```
