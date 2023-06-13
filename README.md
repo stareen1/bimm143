@@ -4,4 +4,5 @@ This page contains my classwork from BIMM 143: Bioinformatics Lab at UC San Dieg
 
 # Content
 
-- Class 
+- Class 7 [Introduction to machine learning for bioinformatics](https://github.com/stareen1/bimm143/blob/main/Class07/Class07.md)
+- 
